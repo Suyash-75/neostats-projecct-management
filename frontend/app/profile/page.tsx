@@ -51,7 +51,7 @@ export default function ProfilePage() {
         <label className="block text-xs font-semibold text-[#50596b]">Name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[#e8eaf0] px-3 text-sm font-normal" /></label>
         <label className="block text-xs font-semibold text-[#50596b]">Email<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[#e8eaf0] px-3 text-sm font-normal" /></label>
         <label className="block text-xs font-semibold text-[#50596b]">New password (leave blank to keep current)<input minLength={8} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-[#e8eaf0] px-3 text-sm font-normal" /></label>
-        <p className="text-xs text-[#8991a0]">Workspace role: {profile.role.replaceAll("_", " ")}</p>
+        <p className="text-xs text-[#8991a0]">Workspace role: {profile.role?.replaceAll("_", " ") ?? "Not available"}</p>
         <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save profile"}</Button>
       </form>}
     </AppShell>
