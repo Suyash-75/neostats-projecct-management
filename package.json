@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "concurrently -k -n backend,frontend \"cd backend && node server.js\" \"cd frontend && npm run dev\""
+    "dev": "concurrently -k -n backend,frontend \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
   },
   "dependencies": {
     "@prisma/client": "^7.10.1",

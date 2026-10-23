@@ -277,7 +277,7 @@ router.get('/projects', authenticateToken, async (req, res) => {
     const [items, total] = await Promise.all([
       prisma.project.findMany({
         where,
-        include: { projectMembers: { include: memberSelect }, _count: { select: { tasks: true } } },
+        include: { projectMembers: { select: memberSelect }, _count: { select: { tasks: true } } },
         orderBy: { updatedAt: 'desc' },
         skip: pagination.skip,
         take: pagination.limit,
@@ -297,7 +297,7 @@ router.get('/projects/:projectId', authenticateToken, async (req, res) => {
     const result = await prisma.project.findUnique({
       where: { id: project.id },
       include: {
-        projectMembers: { include: memberSelect },
+        projectMembers: { select: memberSelect },
         tasks: { include: { assignee: { select: userSelect } }, orderBy: { updatedAt: 'desc' } },
       },
     });
@@ -323,7 +323,7 @@ router.post('/projects', authenticateToken, authorizeRoles(Role.ADMIN, Role.PROJ
           }
           : {}),
       },
-      include: { projectMembers: { include: memberSelect } },
+      include: { projectMembers: { select: memberSelect } },
     });
     return res.status(201).json(project);
   } catch (error) {
@@ -346,7 +346,7 @@ router.patch('/projects/:projectId', authenticateToken, authorizeRoles(Role.ADMI
   try {
     const { project, membership } = await loadProjectAccess(req.params.projectId, req.user.id);
     if (!requireProjectManage(req, res, project, membership)) return;
-    return res.json(await prisma.project.update({ where: { id: project.id }, data, include: { projectMembers: { include: memberSelect } } }));
+    return res.json(await prisma.project.update({ where: { id: project.id }, data, include: { projectMembers: { select: memberSelect } } }));
   } catch (error) {
     return handleDatabaseError(res, error, 'Failed to update project.');
   }
@@ -383,7 +383,7 @@ router.get('/projects/:projectId/members', authenticateToken, async (req, res) =
     if (!requireProjectRead(req, res, project, membership)) return;
     const items = await prisma.projectMember.findMany({
       where: { projectId: project.id },
-      include: memberSelect,
+      select: memberSelect,
       orderBy: { createdAt: 'asc' },
     });
     return res.json(items);
@@ -435,7 +435,7 @@ router.post('/projects/:projectId/members', authenticateToken, authorizeRoles(Ro
           userId,
           role: role ?? ProjectRole.TEAM_MEMBER,
         },
-        include: memberSelect,
+        select: memberSelect,
       });
     });
     return res.status(201).json(projectMember);
@@ -461,7 +461,7 @@ router.patch('/projects/:projectId/members/:userId', authenticateToken, authoriz
     const updated = await prisma.projectMember.update({
       where: { projectId_userId: { projectId: project.id, userId: req.params.userId } },
       data: { role },
-      include: memberSelect,
+      select: memberSelect,
     });
     return res.json(updated);
   } catch (error) {

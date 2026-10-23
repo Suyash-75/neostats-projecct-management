@@ -10,6 +10,7 @@ process.env.JWT_SECRET ||= 'integration-test-secret';
 const prisma = new PrismaClient();
 const app = require('../server');
 const userIds = [];
+const extraProjectIds = [];
 let projectId;
 let taskId;
 let server;
@@ -59,7 +60,9 @@ before(async () => {
 
 after(async () => {
   if (server) await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
-  if (projectId) await prisma.project.deleteMany({ where: { id: projectId } });
+  if (projectId || extraProjectIds.length) {
+    await prisma.project.deleteMany({ where: { id: { in: [projectId, ...extraProjectIds].filter(Boolean) } } });
+  }
   if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
   await prisma.$disconnect();
 });
@@ -79,6 +82,29 @@ async function request(path, role, method = 'GET', body) {
 test('API enforces roles and rejects stale task updates', async () => {
   const unauthenticated = await fetch(`${baseUrl}/projects`);
   assert.equal(unauthenticated.status, 401);
+
+  const adminCreatedProject = await request('/projects', 'ADMIN', 'POST', {
+    name: `Admin-created project ${Date.now()}`,
+    description: 'Created through the project form.',
+  });
+  assert.equal(adminCreatedProject.response.status, 201);
+  extraProjectIds.push(adminCreatedProject.payload.id);
+  assert.equal(adminCreatedProject.payload.description, 'Created through the project form.');
+  const projectPage = await request('/projects?limit=100', 'ADMIN');
+  assert.equal(projectPage.response.status, 200);
+  assert.ok(projectPage.payload.items.some((project) => project.id === adminCreatedProject.payload.id));
+
+  const managerCreatedProject = await request('/projects', 'PROJECT_MANAGER', 'POST', {
+    name: `Manager-created project ${Date.now()}`,
+  });
+  assert.equal(managerCreatedProject.response.status, 201);
+  extraProjectIds.push(managerCreatedProject.payload.id);
+  assert.ok(managerCreatedProject.payload.projectMembers.some((member) =>
+    member.user.id === userIds[1] && member.role === 'PROJECT_MANAGER'
+  ));
+  const managerProjectDetails = await request(`/projects/${managerCreatedProject.payload.id}`, 'PROJECT_MANAGER');
+  assert.equal(managerProjectDetails.response.status, 200);
+  assert.equal(managerProjectDetails.payload.projectMembers[0].user.name, 'Test Project Manager');
 
   const deniedTaskCreation = await request(`/projects/${projectId}/tasks`, 'VIEWER', 'POST', { title: 'Unauthorized task' });
   assert.equal(deniedTaskCreation.response.status, 403);

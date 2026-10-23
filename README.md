@@ -51,7 +51,7 @@ No hosted database, backend-as-a-service, or deployment is required.
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000). The API is at `http://127.0.0.1:5000/api`; its database health endpoint is `http://127.0.0.1:5000/api/health`.
+   Keep this PowerShell window open while using the app; it runs both the watched backend and frontend and prints their logs. Open [http://localhost:3000](http://localhost:3000). The API is at `http://127.0.0.1:5000/api`; its database health endpoint is `http://127.0.0.1:5000/api/health`.
 
 To inspect the local database in pgAdmin, connect to the same PostgreSQL server and open the `neostats` database. Prisma tables include `User`, `Project`, `ProjectMember`, `Task`, and `TaskComment`.
 
