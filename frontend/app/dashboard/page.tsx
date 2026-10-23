@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { AppShell, Avatar, Button, Icon, PageHeading, ProgressBar, StatusBadge } from "../components/ui";
-import { projects, tasks } from "../data";
+import { ActionNoticeButton } from "../components/action-notice-button";
+import { CurrentDateTime } from "../components/current-date-time";
+import { AppShell, Avatar, Icon, PageHeading, ProgressBar, StatusBadge } from "../components/ui";
+import { formatDate, projects, tasks } from "../data";
 
 const stats = [
   { label: "Total projects", value: "12", delta: "+2 this month", icon: "folder", color: "bg-[#f0edff] text-[#6558d3]" },
@@ -15,10 +17,14 @@ export default function DashboardPage() {
   return (
     <AppShell active="Overview">
       <PageHeading
-        eyebrow="Monday, June 16, 2025"
-        title="Good morning, Olivia"
+        eyebrow={<CurrentDateTime />}
+        title="Good morning, Suyash"
         description="Here’s what’s happening across your workspace today."
-        action={<Button><Icon name="plus" size={17} /> New project</Button>}
+        action={<ActionNoticeButton
+          title="Create a project"
+          message="Project creation is not connected to the API yet. This demo dashboard currently uses sample project data."
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#6558d3] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3]"
+        ><Icon name="plus" size={17} /> New project</ActionNoticeButton>}
       />
 
       <section aria-label="Workspace statistics" className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -26,7 +32,6 @@ export default function DashboardPage() {
           <article key={stat.label} className="rounded-xl border border-[#eaecf1] bg-white p-5 shadow-[0_1px_2px_#20263806]">
             <div className="mb-4 flex items-start justify-between">
               <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.color}`}><Icon name={stat.icon} size={19} /></span>
-              <button aria-label={`More about ${stat.label}`} className="rounded-md p-1 text-[#9aa1b1] hover:bg-[#f5f6f8]"><Icon name="more" size={18} /></button>
             </div>
             <p className="text-sm text-[#7b8394]">{stat.label}</p>
             <div className="mt-1.5 flex items-baseline gap-2">
@@ -68,7 +73,7 @@ export default function DashboardPage() {
             {activeTasks.slice(0, 4).map((task) => (
               <Link href={`/tasks/${task.id}`} key={task.id} className="flex items-center gap-3 px-5 py-4 transition hover:bg-[#fafaff]">
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${task.status === "In progress" ? "border-[#9287e4] bg-[#f2f0ff]" : "border-[#dfe2e9]"}`}>{task.status === "In progress" && <Icon name="check" size={13} className="text-[#6558d3]" />}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium text-[#384052]">{task.title}</span><span className="mt-1 block text-[11px] text-[#939aaa]">{task.projectName} · Due {task.dueDate.split(",")[0]}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium text-[#384052]">{task.title}</span><span className="mt-1 block text-[11px] text-[#939aaa]">{task.projectName} · Due {formatDate(task.dueDate)}</span></span>
                 <StatusBadge status={task.status} />
               </Link>
             ))}

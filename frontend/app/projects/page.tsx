@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AppShell, Avatar, Button, Icon, PageHeading, ProgressBar, StatusBadge } from "../components/ui";
-import { projects } from "../data";
+import { ActionNoticeButton } from "../components/action-notice-button";
+import { AppShell, Avatar, Icon, PageHeading, ProgressBar, StatusBadge } from "../components/ui";
+import { formatDate, projects } from "../data";
 
 type Filter = "All projects" | "In progress" | "Completed";
 
@@ -23,7 +24,11 @@ export default function ProjectsPage() {
         eyebrow="Workspace"
         title="Projects"
         description="Plan, track, and deliver your team’s best work."
-        action={<Button><Icon name="plus" size={17} /> Create project</Button>}
+        action={<ActionNoticeButton
+          title="Create a project"
+          message="Project creation is not connected to the API yet. This page currently displays sample projects."
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#6558d3] px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3]"
+        ><Icon name="plus" size={17} /> Create project</ActionNoticeButton>}
       />
       <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex gap-1 overflow-x-auto rounded-lg border border-[#e9ebf1] bg-white p-1">
@@ -36,7 +41,6 @@ export default function ProjectsPage() {
       </div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs text-[#858d9d]">Showing <span className="font-semibold text-[#4b5363]">{visibleProjects.length}</span> projects</p>
-        <button className="flex items-center gap-2 rounded-lg border border-[#e8eaf0] bg-white px-3 py-2 text-xs font-medium text-[#697386]"><Icon name="filter" size={15} /> Filters</button>
       </div>
       {visibleProjects.length ? <div className="grid gap-4 lg:grid-cols-2">
         {visibleProjects.map((project) => (
@@ -46,7 +50,6 @@ export default function ProjectsPage() {
                 <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${project.color === "violet" ? "bg-[#efedff] text-[#7466d6]" : project.color === "blue" ? "bg-[#e9f3ff] text-[#5793cc]" : project.color === "amber" ? "bg-[#fff4df] text-[#c28b29]" : "bg-[#fff0f6] text-[#ca6795]"}`}><Icon name="folder" size={21} /></span>
                 <div className="min-w-0"><Link href={`/projects/${project.id}`} className="block truncate text-[15px] font-semibold text-[#303748] hover:text-[#6558d3]">{project.name}</Link><p className="mt-0.5 truncate text-xs text-[#8991a0]">{project.client}</p></div>
               </div>
-              <button aria-label={`More options for ${project.name}`} className="rounded-md p-1 text-[#9aa1b1] hover:bg-[#f5f6f8]"><Icon name="more" size={18} /></button>
             </div>
             <p className="mb-5 line-clamp-2 min-h-10 text-[13px] leading-5 text-[#7b8394]">{project.description}</p>
             <div className="mb-2 flex items-center justify-between text-xs"><span className="font-medium text-[#6f788b]">Project progress</span><span className="font-semibold text-[#41495a]">{project.progress}%</span></div>
@@ -55,7 +58,7 @@ export default function ProjectsPage() {
               <div className="flex items-center gap-2.5"><div className="flex -space-x-2">{project.members.slice(0, 4).map((member) => <Avatar key={member.initials} initials={member.initials} color={member.color} size="sm" />)}</div><span className="text-[11px] text-[#8b92a1]">{project.members.length} members</span></div>
               <div className="flex items-center gap-4"><span className="text-[11px] text-[#858d9d]">{project.completedTasks}/{project.tasks} tasks</span><StatusBadge status={project.status} /></div>
             </div>
-            <div className="mt-4 flex items-center justify-between text-[11px] text-[#8b92a1]"><span className="flex items-center gap-1.5"><Icon name="calendar" size={14} /> Due {project.dueDate}</span><Link href={`/projects/${project.id}`} className="font-semibold text-[#6558d3] hover:underline">Open project <span aria-hidden>→</span></Link></div>
+            <div className="mt-4 flex items-center justify-between text-[11px] text-[#8b92a1]"><span className="flex items-center gap-1.5"><Icon name="calendar" size={14} /> Due {formatDate(project.dueDate)}</span><Link href={`/projects/${project.id}`} className="font-semibold text-[#6558d3] hover:underline">Open project <span aria-hidden>→</span></Link></div>
           </article>
         ))}
       </div> : <div className="rounded-xl border border-dashed border-[#dfe2e9] bg-white px-6 py-16 text-center"><span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f3f1ff] text-[#6558d3]"><Icon name="search" size={22} /></span><h2 className="font-semibold text-[#303748]">No projects found</h2><p className="mt-1 text-sm text-[#8991a0]">Try a different search or filter.</p></div>}

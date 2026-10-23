@@ -24,6 +24,15 @@ export type Task = {
   assignee: { name: string; initials: string; color: string };
 };
 
+export function formatDate(date: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(`${date}T12:00:00Z`));
+}
+
 export const projects: Project[] = [
   {
     id: "1",
@@ -33,12 +42,12 @@ export const projects: Project[] = [
     color: "violet",
     progress: 72,
     status: "On track",
-    dueDate: "Jun 28, 2025",
+    dueDate: "2026-11-14",
     members: [
-      { name: "Olivia Rhye", initials: "OR", color: "peach" },
-      { name: "Phoenix Baker", initials: "PB", color: "blue" },
-      { name: "Lana Steiner", initials: "LS", color: "pink" },
-      { name: "Demi Wilkinson", initials: "DW", color: "green" },
+      { name: "Suyash Pandey", initials: "SP", color: "peach" },
+      { name: "Rahul Sharma", initials: "RS", color: "blue" },
+      { name: "Priya Mehta", initials: "PM", color: "pink" },
+      { name: "Ananya Iyer", initials: "AI", color: "green" },
     ],
     tasks: 24,
     completedTasks: 17,
@@ -51,11 +60,11 @@ export const projects: Project[] = [
     color: "blue",
     progress: 48,
     status: "At risk",
-    dueDate: "Jul 12, 2025",
+    dueDate: "2026-12-12",
     members: [
-      { name: "Phoenix Baker", initials: "PB", color: "blue" },
-      { name: "Candice Wu", initials: "CW", color: "yellow" },
-      { name: "Drew Cano", initials: "DC", color: "violet" },
+      { name: "Rahul Sharma", initials: "RS", color: "blue" },
+      { name: "Arjun Patel", initials: "AP", color: "yellow" },
+      { name: "Meera Nair", initials: "MN", color: "violet" },
     ],
     tasks: 31,
     completedTasks: 15,
@@ -68,10 +77,10 @@ export const projects: Project[] = [
     color: "amber",
     progress: 90,
     status: "On track",
-    dueDate: "Jun 20, 2025",
+    dueDate: "2026-11-20",
     members: [
-      { name: "Olivia Rhye", initials: "OR", color: "peach" },
-      { name: "Natali Craig", initials: "NC", color: "green" },
+      { name: "Suyash Pandey", initials: "SP", color: "peach" },
+      { name: "Karan Shah", initials: "KS", color: "green" },
     ],
     tasks: 18,
     completedTasks: 16,
@@ -84,11 +93,11 @@ export const projects: Project[] = [
     color: "pink",
     progress: 25,
     status: "On track",
-    dueDate: "Aug 04, 2025",
+    dueDate: "2026-12-04",
     members: [
-      { name: "Demi Wilkinson", initials: "DW", color: "green" },
-      { name: "Candice Wu", initials: "CW", color: "yellow" },
-      { name: "Lana Steiner", initials: "LS", color: "pink" },
+      { name: "Ananya Iyer", initials: "AI", color: "green" },
+      { name: "Arjun Patel", initials: "AP", color: "yellow" },
+      { name: "Priya Mehta", initials: "PM", color: "pink" },
     ],
     tasks: 20,
     completedTasks: 5,
@@ -104,8 +113,8 @@ export const tasks: Task[] = [
     description: "Create a responsive homepage that introduces the new visual direction and guides visitors to the right product.",
     status: "In progress",
     priority: "High",
-    dueDate: "Jun 18, 2025",
-    assignee: { name: "Olivia Rhye", initials: "OR", color: "peach" },
+    dueDate: "2026-10-28",
+    assignee: { name: "Suyash Pandey", initials: "SP", color: "peach" },
   },
   {
     id: "tsk-105",
@@ -115,8 +124,8 @@ export const tasks: Task[] = [
     description: "Review the mobile navigation prototype and share any usability feedback with the team.",
     status: "In review",
     priority: "Medium",
-    dueDate: "Jun 20, 2025",
-    assignee: { name: "Phoenix Baker", initials: "PB", color: "blue" },
+    dueDate: "2026-10-30",
+    assignee: { name: "Rahul Sharma", initials: "RS", color: "blue" },
   },
   {
     id: "tsk-106",
@@ -126,8 +135,8 @@ export const tasks: Task[] = [
     description: "Write and proof the launch copy for the redesigned marketing pages.",
     status: "To do",
     priority: "Low",
-    dueDate: "Jun 24, 2025",
-    assignee: { name: "Lana Steiner", initials: "LS", color: "pink" },
+    dueDate: "2026-11-03",
+    assignee: { name: "Priya Mehta", initials: "PM", color: "pink" },
   },
   {
     id: "tsk-201",
@@ -137,8 +146,8 @@ export const tasks: Task[] = [
     description: "Finalize the first-run onboarding experience for new mobile app users.",
     status: "In progress",
     priority: "High",
-    dueDate: "Jun 19, 2025",
-    assignee: { name: "Phoenix Baker", initials: "PB", color: "blue" },
+    dueDate: "2026-10-29",
+    assignee: { name: "Rahul Sharma", initials: "RS", color: "blue" },
   },
   {
     id: "tsk-301",
@@ -148,8 +157,8 @@ export const tasks: Task[] = [
     description: "Package approved brand assets for handoff to the client team.",
     status: "Done",
     priority: "Medium",
-    dueDate: "Jun 16, 2025",
-    assignee: { name: "Olivia Rhye", initials: "OR", color: "peach" },
+    dueDate: "2026-10-25",
+    assignee: { name: "Suyash Pandey", initials: "SP", color: "peach" },
   },
 ];
 

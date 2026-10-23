@@ -9,7 +9,10 @@
     "dev": "node --watch server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "seed": "node prisma/seed.js"
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "seed": "node prisma/seed.js",
+    "test": "node --test"
   },
   "type": "commonjs",
   "dependencies": {

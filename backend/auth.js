@@ -20,9 +20,9 @@ function authenticateToken(req, res, next) {
     try {
       const user = await prisma.user.findUnique({
         where: { id: claims.id },
-        select: { id: true, email: true, role: true },
+        select: { id: true, email: true, role: true, isActive: true },
       });
-      if (!user) {
+      if (!user || !user.isActive) {
         return res.status(401).json({ error: 'Account no longer exists.' });
       }
       req.user = user;

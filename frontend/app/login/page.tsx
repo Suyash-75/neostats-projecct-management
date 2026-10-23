@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "../components/ui";
+import { apiRequest, clearSession } from "../lib/api";
 
 const roles = [
   { value: "ADMIN", label: "Admin", caption: "Full workspace access", icon: "users" },
@@ -26,29 +27,19 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5000"}/api/login`, {
+      const result = await apiRequest<{ token: string; user: { id: string; name: string; role: string } }>("/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
       });
-      const contentType = response.headers.get("content-type") ?? "";
-      const result = contentType.includes("application/json")
-        ? await response.json()
-        : { error: response.status === 404
-          ? "The backend at port 5000 does not have the login route. Restart it from the backend folder."
-          : `The backend returned an unexpected response (HTTP ${response.status}).` };
-
-      if (!response.ok) {
-        setLoginError(result.error ?? "Unable to sign in. Please try again.");
-        return;
-      }
-
+      clearSession();
       sessionStorage.setItem("neostat-token", result.token);
-      sessionStorage.setItem("neostat-role", result.role);
+      sessionStorage.setItem("neostat-role", result.user.role);
+      sessionStorage.setItem("neostat-name", result.user.name);
+      sessionStorage.setItem("neostat-user-id", result.user.id);
       router.push("/dashboard");
     } catch (error) {
       console.error("Login request failed:", error);
-      setLoginError("Could not connect to the API at 127.0.0.1:5000. Start the backend with `npm start` from the backend folder.");
+      setLoginError(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -67,10 +58,10 @@ export default function LoginPage() {
           <p className="mt-5 max-w-[440px] text-sm leading-6 text-[#b5b2c9]">Bring your projects, people, and progress into one clear workspace. Spend less time keeping track and more time making an impact.</p>
           <div className="mt-10 rounded-2xl border border-white/[.1] bg-white/[.06] p-5 backdrop-blur">
             <div className="mb-4 flex items-center gap-2"><div className="flex -space-x-2"><span className="h-7 w-7 rounded-full border-2 border-[#28243f] bg-[#f4cbb5]" /><span className="h-7 w-7 rounded-full border-2 border-[#28243f] bg-[#d6e2ff]" /><span className="h-7 w-7 rounded-full border-2 border-[#28243f] bg-[#f1d9e8]" /><span className="h-7 w-7 rounded-full border-2 border-[#28243f] bg-[#d5ebd9]" /></div><span className="text-xs text-[#c2bfd3]">Teams at work, in sync</span></div>
-            <p className="text-sm leading-6 text-[#e5e2f0]">“Neostat gives us the clarity to do our best work without the noise. Our whole team feels the difference.”</p><p className="mt-3 text-xs font-medium text-[#aba7be]">Olivia Rhye <span className="px-1 text-[#69647e]">·</span> Product manager</p>
+            <p className="text-sm leading-6 text-[#e5e2f0]">“Neostat gives us the clarity to do our best work without the noise. Our whole team feels the difference.”</p><p className="mt-3 text-xs font-medium text-[#aba7be]">Suyash Pandey <span className="px-1 text-[#69647e]">·</span> Product manager</p>
           </div>
         </div>
-        <p className="relative z-10 text-[11px] text-[#89859d]">© 2025 Neostat, Inc. All rights reserved.</p>
+        <p className="relative z-10 text-[11px] text-[#89859d]">© 2026 Neostat, Inc. All rights reserved.</p>
       </section>
       <section className="flex min-h-screen flex-col px-5 py-7 sm:px-10 lg:justify-center lg:px-12 xl:px-20">
         <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6558d3] text-white"><Icon name="spark" size={19} /></span><span className="text-lg font-bold tracking-tight text-[#202638]">Project<span className="text-[#6558d3]">Pulse</span></span></Link>
@@ -81,11 +72,11 @@ export default function LoginPage() {
               {roles.map((item) => <button key={item.value} type="button" onClick={() => setRole(item.value)} aria-pressed={role === item.value} className={`rounded-xl border p-3 text-left transition ${role === item.value ? "border-[#a69eee] bg-[#f8f7ff] ring-1 ring-[#c9c3f4]" : "border-[#e9ebf1] bg-white hover:border-[#d3d5de]"}`}><span className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg ${role === item.value ? "bg-[#eeebff] text-[#6558d3]" : "bg-[#f5f6f8] text-[#818a9b]"}`}><Icon name={item.icon} size={16} /></span><span className="block text-[11px] font-semibold text-[#41495a]">{item.label}</span><span className="mt-1 hidden text-[10px] leading-4 text-[#8991a0] sm:block">{item.caption}</span></button>)}
             </div></fieldset>
             <div><label htmlFor="email" className="mb-2 block text-xs font-semibold text-[#50596b]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white px-3.5 text-sm text-[#202638] outline-none placeholder:text-[#697386] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div>
-            <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-xs font-semibold text-[#50596b]">Password</label><button type="button" className="text-xs font-semibold text-[#6558d3] hover:underline">Forgot password?</button></div><div className="relative"><Icon name="lock" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa1b1]" /><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white pl-10 pr-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div></div>
+            <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-xs font-semibold text-[#50596b]">Password</label></div><div className="relative"><Icon name="lock" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa1b1]" /><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white pl-10 pr-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div></div>
             {loginError && <p role="alert" className="rounded-lg bg-[#fff0ee] px-3 py-2.5 text-xs font-medium text-[#a94138]">{loginError}</p>}
             <button type="submit" disabled={isSubmitting} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#6558d3] text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3] disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Signing in..." : "Sign in"} {!isSubmitting && <Icon name="arrow" size={16} />}</button>
           </form>
-          <p className="mt-6 text-center text-xs text-[#868e9e]">New to Neostat? <button type="button" className="font-semibold text-[#6558d3] hover:underline">Create an account</button></p>
+          <p className="mt-6 text-center text-xs text-[#868e9e]">Need an account? Contact your workspace administrator.</p>
           <p className="mt-8 text-center text-[11px] leading-5 text-[#a0a6b2]">Demo accounts use password123: admin@neostats.com · pm@neostats.com · member@neostats.com · viewer@neostats.com</p>
           <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">By continuing, you agree to our <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Terms of Service</a> and <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Privacy Policy</a>.</p>
         </div>

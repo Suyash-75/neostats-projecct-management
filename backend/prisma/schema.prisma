@@ -21,40 +21,78 @@ enum TaskStatus {
   DONE
 }
 
+enum ProjectRole {
+  PROJECT_MANAGER
+  TEAM_MEMBER
+  VIEWER
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id            String        @id @default(cuid())
   name          String
   email         String        @unique
   password      String
   role          Role          @default(TEAM_MEMBER)
-  projects      Project[]
+  isActive      Boolean       @default(true)
+  projects      Project[]      @relation("ProjectUsers")
+  memberships   ProjectMember[]
   assignedTasks Task[]        @relation("TaskAssignee")
   comments      TaskComment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([role, isActive])
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String          @id @default(cuid())
+  name        String          @unique
   description String?
-  members     User[]
+  archivedAt  DateTime?
+  members     User[]           @relation("ProjectUsers")
+  projectMembers ProjectMember[]
   tasks       Task[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([archivedAt])
+}
+
+model ProjectMember {
+  projectId String
+  userId    String
+  role      ProjectRole @default(TEAM_MEMBER)
+  createdAt DateTime    @default(now())
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
 }
 
 model Task {
-  id         String        @id @default(cuid())
-  title      String
-  status     TaskStatus    @default(TODO)
-  projectId  String
-  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assigneeId String?
-  assignee   User?         @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  comments   TaskComment[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus    @default(TODO)
+  priority    TaskPriority  @default(MEDIUM)
+  dueDate     DateTime?
+  version     Int           @default(1)
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assigneeId  String?
+  assignee    User?         @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  comments    TaskComment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([projectId, status])
 }
 
 model TaskComment {
@@ -65,4 +103,6 @@ model TaskComment {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
 }

@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { NotificationButton } from "./notification-button";
+import { apiRequest, clearSession, type User } from "../lib/api";
 
 export function Icon({
   name,
@@ -98,7 +103,7 @@ export function StatusBadge({ status }: { status: string }) {
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: "grid" },
   { href: "/projects", label: "Projects", icon: "folder" },
-  { href: "/tasks/tsk-104", label: "My tasks", icon: "check" },
+  { href: "/tasks", label: "Tasks", icon: "check" },
 ];
 
 export function AppShell({
@@ -108,6 +113,38 @@ export function AppShell({
   children: ReactNode;
   active?: string;
 }) {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (!window.sessionStorage.getItem("neostat-token")) {
+      router.replace("/login");
+      return;
+    }
+    const handleUnauthorized = () => router.replace("/login");
+    window.addEventListener("neostat:unauthorized", handleUnauthorized);
+    apiRequest<User>("/profile")
+      .then((profile) => {
+        setUser(profile);
+        window.sessionStorage.setItem("neostat-name", profile.name);
+        window.sessionStorage.setItem("neostat-role", profile.role);
+        window.sessionStorage.setItem("neostat-user-id", profile.id);
+      })
+      .catch((error) => {
+        console.error("Loading workspace profile failed:", error);
+      });
+    return () => window.removeEventListener("neostat:unauthorized", handleUnauthorized);
+  }, [router]);
+
+  const nav = user?.role === "ADMIN"
+    ? [...navItems, { href: "/users", label: "Users", icon: "users" }]
+    : navItems;
+
+  function logout() {
+    clearSession();
+    router.replace("/login");
+  }
+
   return (
     <div className="min-h-screen md:flex">
       <aside className="flex w-full flex-col border-b border-[#e9ebf1] bg-white px-4 py-4 md:fixed md:inset-y-0 md:w-[248px] md:border-r md:border-b-0 md:px-5 md:py-7">
@@ -118,14 +155,13 @@ export function AppShell({
         </Link>
         <p className="mb-2 hidden px-3 text-[10px] font-bold uppercase tracking-[.14em] text-[#9aa1b1] md:block">Workspace</p>
         <nav className="flex gap-1 overflow-x-auto md:flex-col">
-          {navItems.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.label}
               href={item.href}
               className={`flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition ${active === item.label ? "bg-[#f1efff] text-[#5d50c7]" : "text-[#687286] hover:bg-[#f7f8fa] hover:text-[#202638]"}`}
             >
               <Icon name={item.icon} size={18} />{item.label}
-              {item.label === "My tasks" && <span className="ml-auto hidden rounded-md bg-white px-2 py-0.5 text-[11px] text-[#777f90] md:inline">4</span>}
             </Link>
           ))}
         </nav>
@@ -143,24 +179,22 @@ export function AppShell({
           <Link href="/projects" className="text-xs font-semibold text-[#6558d3] hover:underline">View progress <span aria-hidden>→</span></Link>
         </div>
         <div className="mt-4 hidden border-t border-[#eceef2] pt-4 md:block">
-          <Link href="/login" className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[#f7f8fa]">
-            <Avatar initials="OR" color="peach" />
-            <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-[#30384a]">Olivia Rhye</span><span className="block truncate text-[11px] text-[#8a91a0]">Product manager</span></span>
-            <Icon name="more" size={18} className="text-[#9299a8]" />
+          <Link href="/profile" className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[#f7f8fa]">
+            <Avatar initials={user?.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("") ?? "U"} color="peach" />
+            <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-[#30384a]">{user?.name ?? "Loading profile…"}</span><span className="block truncate text-[11px] text-[#8a91a0]">{user?.role.replaceAll("_", " ") ?? "Workspace user"}</span></span>
           </Link>
+          <button type="button" onClick={logout} className="mt-2 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-xs font-medium text-[#687286] hover:bg-[#f7f8fa]">
+            <Icon name="logout" size={16} /> Sign out
+          </button>
         </div>
       </aside>
       <div className="min-w-0 flex-1 md:ml-[248px]">
-        <header className="sticky top-0 z-10 hidden h-[72px] items-center justify-between border-b border-[#e9ebf1] bg-[#ffffffeb] px-8 backdrop-blur md:flex">
-          <div className="relative w-[320px]">
-            <Icon name="search" size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa1b1]" />
-            <input aria-label="Search" placeholder="Search anything..." className="h-10 w-full rounded-lg border border-[#e8eaf0] bg-[#fafbfc] pl-10 pr-14 text-sm outline-none placeholder:text-[#9ba2b1] focus:border-[#a39aeb]" />
-            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-[#e5e7eb] bg-white px-1.5 py-0.5 text-[10px] text-[#9299a8]">⌘ K</kbd>
-          </div>
+      <header className="sticky top-0 z-10 hidden h-[72px] items-center justify-between border-b border-[#e9ebf1] bg-[#ffffffeb] px-8 backdrop-blur md:flex">
+        <span className="text-xs text-[#8991a0]">Workspace</span>
           <div className="flex items-center gap-4">
-            <button aria-label="Notifications" className="relative rounded-lg p-2 text-[#757e90] hover:bg-[#f3f4f8]"><Icon name="bell" size={19} /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-[#ef7770]" /></button>
+            <NotificationButton />
             <div className="h-7 w-px bg-[#e9ebf1]" />
-            <Avatar initials="OR" color="peach" />
+            <Avatar initials="SP" color="peach" />
           </div>
         </header>
         <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 md:px-8 md:py-8">{children}</main>
@@ -175,7 +209,7 @@ export function PageHeading({
   description,
   action,
 }: {
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
