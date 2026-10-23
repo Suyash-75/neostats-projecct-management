@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { NotificationButton } from "./notification-button";
 import { apiRequest, clearSession, type User } from "../lib/api";
 
 export function Icon({
@@ -189,8 +188,6 @@ export function AppShell({
       <header className="sticky top-0 z-10 hidden h-[72px] items-center justify-between border-b border-[#e9ebf1] bg-[#ffffffeb] px-8 backdrop-blur md:flex">
         <span className="text-xs text-[#8991a0]">Workspace</span>
           <div className="flex items-center gap-4">
-            <NotificationButton />
-            <div className="h-7 w-px bg-[#e9ebf1]" />
             <Link href="/profile" aria-label="Open your profile"><Avatar initials={user?.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("") ?? "U"} color="peach" /></Link>
           </div>
         </header>

@@ -106,7 +106,6 @@ export default function LoginPage() {
           </form>
           <p className="mt-6 text-center text-xs text-[#868e9e]">Need an account? Contact your workspace administrator.</p>
           <p className="mt-8 text-center text-[11px] leading-5 text-[#a0a6b2]">Demo accounts use password123: admin@neostats.com · pm@neostats.com · member@neostats.com · viewer@neostats.com</p>
-          <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">By continuing, you agree to our <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Terms of Service</a> and <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Privacy Policy</a>.</p>
         </div>
       </section>
     </main>
