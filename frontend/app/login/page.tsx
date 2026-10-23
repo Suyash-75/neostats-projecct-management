@@ -13,6 +13,21 @@ const roles = [
   { value: "VIEWER", label: "Viewer", caption: "Read-only project access", icon: "eye" },
 ];
 
+function getUserIdFromToken(token: string) {
+  const encodedPayload = token.split(".")[1];
+  if (!encodedPayload) throw new Error("Login response contains an invalid token.");
+
+  let claims: { id?: unknown };
+  try {
+    const base64 = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
+    claims = JSON.parse(window.atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="))) as { id?: unknown };
+  } catch {
+    throw new Error("Login response contains an invalid token.");
+  }
+  if (typeof claims.id !== "string") throw new Error("Login response is missing the account ID.");
+  return claims.id;
+}
+
 export default function LoginPage() {
   const [role, setRole] = useState("ADMIN");
   const [email, setEmail] = useState("");
@@ -27,15 +42,28 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await apiRequest<{ token: string; user: { id: string; name: string; role: string } }>("/login", {
+      const result = await apiRequest<{
+        token?: unknown;
+        user?: { id?: unknown; name?: unknown; role?: unknown };
+        id?: unknown;
+        name?: unknown;
+        role?: unknown;
+      }>("/login", {
         method: "POST",
         body: JSON.stringify({ email, password, role }),
       });
+      const token = typeof result.token === "string" ? result.token : "";
+      const userRole = result.user?.role ?? result.role;
+      const userName = result.user?.name ?? result.name;
+      const userId = result.user?.id ?? result.id;
+      if (!token || typeof userRole !== "string" || typeof userName !== "string") {
+        throw new Error("Login response is missing required account information.");
+      }
       clearSession();
-      sessionStorage.setItem("neostat-token", result.token);
-      sessionStorage.setItem("neostat-role", result.user.role);
-      sessionStorage.setItem("neostat-name", result.user.name);
-      sessionStorage.setItem("neostat-user-id", result.user.id);
+      sessionStorage.setItem("neostat-token", token);
+      sessionStorage.setItem("neostat-role", userRole);
+      sessionStorage.setItem("neostat-name", userName);
+      sessionStorage.setItem("neostat-user-id", typeof userId === "string" ? userId : getUserIdFromToken(token));
       router.push("/dashboard");
     } catch (error) {
       console.error("Login request failed:", error);
