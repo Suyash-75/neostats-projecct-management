@@ -93,6 +93,11 @@ test('API enforces roles and rejects stale task updates', async () => {
   const projectPage = await request('/projects?limit=100', 'ADMIN');
   assert.equal(projectPage.response.status, 200);
   assert.ok(projectPage.payload.items.some((project) => project.id === adminCreatedProject.payload.id));
+  for (const role of ['PROJECT_MANAGER', 'TEAM_MEMBER', 'VIEWER']) {
+    const memberProjectPage = await request('/projects?limit=100', role);
+    assert.equal(memberProjectPage.response.status, 200, `${role} should be able to fetch projects`);
+    assert.ok(memberProjectPage.payload.items.some((project) => project.id === projectId), `${role} should see their project`);
+  }
 
   const managerCreatedProject = await request('/projects', 'PROJECT_MANAGER', 'POST', {
     name: `Manager-created project ${Date.now()}`,
