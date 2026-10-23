@@ -47,6 +47,7 @@ export type Task = {
   projectId: string;
   assigneeId: string | null;
   assignee: User | null;
+  project?: { id: string; name: string; archivedAt: string | null; projectMembers?: { userId: string; role: ProjectRole }[] };
   updatedAt: string;
 };
 

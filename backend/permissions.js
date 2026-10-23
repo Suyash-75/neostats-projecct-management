@@ -17,10 +17,11 @@ function canAccessTask(user, task) {
 
 function canUpdateTask(user, task) {
   if (user.role === Role.ADMIN) return true;
-  if (user.role === Role.PROJECT_MANAGER && task.memberships.some((membership) =>
-    membership.userId === user.id && membership.role === ProjectRole.PROJECT_MANAGER
-  )) return true;
-  return user.role === Role.TEAM_MEMBER && task.assigneeId === user.id;
+  const membership = task.memberships.find((item) => item.userId === user.id);
+  if (user.role === Role.PROJECT_MANAGER) return membership?.role === ProjectRole.PROJECT_MANAGER;
+  return user.role === Role.TEAM_MEMBER &&
+    membership?.role === ProjectRole.TEAM_MEMBER &&
+    task.assigneeId === user.id;
 }
 
 function canManageTask(user, task) {
@@ -30,8 +31,16 @@ function canManageTask(user, task) {
   );
 }
 
+function canCommentTask(user, task) {
+  if (user.role === Role.ADMIN) return true;
+  const membership = task.memberships.find((item) => item.userId === user.id);
+  if (user.role === Role.PROJECT_MANAGER) return membership?.role === ProjectRole.PROJECT_MANAGER;
+  return user.role === Role.TEAM_MEMBER && membership?.role === ProjectRole.TEAM_MEMBER;
+}
+
 module.exports = {
   canAccessTask,
+  canCommentTask,
   canManageProject,
   canManageTask,
   canReadProject,

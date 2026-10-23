@@ -6,6 +6,7 @@ const prisma = require('../prisma/client');
 const { authenticateToken, authorizeRoles } = require('../auth');
 const {
   canAccessTask,
+  canCommentTask,
   canManageProject,
   canManageTask,
   canReadProject,
@@ -26,10 +27,16 @@ const memberSelect = {
 };
 
 function parsePagination(query) {
-  const page = Number.parseInt(query.page, 10) || 1;
-  const limit = Number.parseInt(query.limit, 10) || 20;
-  if (page < 1 || limit < 1 || limit > 100) return null;
-  return { page, limit, skip: (page - 1) * limit };
+  const pageValue = query.page ?? '1';
+  const limitValue = query.limit ?? '20';
+  if (typeof pageValue !== 'string' || !/^\d+$/.test(pageValue) ||
+      typeof limitValue !== 'string' || !/^\d+$/.test(limitValue)) return null;
+  const page = Number(pageValue);
+  const limit = Number(limitValue);
+  const skip = (page - 1) * limit;
+  if (!Number.isSafeInteger(page) || !Number.isSafeInteger(limit) || !Number.isSafeInteger(skip) ||
+      page < 1 || limit < 1 || limit > 100) return null;
+  return { page, limit, skip };
 }
 
 function parseOptionalDate(value) {
@@ -64,8 +71,7 @@ function isAdmin(req) {
 }
 
 function requireProjectRead(req, res, project, membership) {
-  if (!project || (project.archivedAt && !isAdmin(req)) ||
-      !canReadProject(req.user, membership)) {
+  if (!project || !canReadProject(req.user, membership)) {
     res.status(404).json({ error: 'Project not found or not accessible.' });
     return false;
   }
@@ -236,6 +242,7 @@ router.patch('/users/:userId', authenticateToken, async (req, res) => {
     }
     if (isActive !== undefined) {
       if (typeof isActive !== 'boolean') return res.status(400).json({ error: 'isActive must be a boolean.' });
+      if (!isActive && req.user.id === req.params.userId) return res.status(400).json({ error: 'Admins cannot deactivate their own account.' });
       data.isActive = isActive;
     }
   }
@@ -262,10 +269,9 @@ router.get('/projects', authenticateToken, async (req, res) => {
   const pagination = parsePagination(req.query);
   if (!pagination) return res.status(400).json({ error: 'Pagination must use page >= 1 and limit between 1 and 100.' });
   const archived = req.query.archived === 'true';
-  if (archived && !isAdmin(req)) return res.status(403).json({ error: 'Only admins can view archived projects.' });
   const where = archived ? { archivedAt: { not: null } } : { archivedAt: null };
   if (!isAdmin(req)) {
-    where.members = { some: { userId: req.user.id } };
+    where.projectMembers = { some: { userId: req.user.id } };
   }
   try {
     const [items, total] = await Promise.all([
@@ -410,10 +416,13 @@ router.post('/projects/:projectId/members', authenticateToken, authorizeRoles(Ro
   try {
     const { project, membership } = await loadProjectAccess(req.params.projectId, req.user.id);
     if (!requireProjectManage(req, res, project, membership)) return;
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, isActive: true } });
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, isActive: true, role: true } });
     if (!user || !user.isActive) return res.status(404).json({ error: 'Active user not found.' });
     if (req.user.role !== Role.ADMIN && role === ProjectRole.PROJECT_MANAGER) {
       return res.status(403).json({ error: 'Only admins can assign project manager role.' });
+    }
+    if (role === ProjectRole.PROJECT_MANAGER && user.role !== Role.PROJECT_MANAGER) {
+      return res.status(400).json({ error: 'Only accounts with the project manager global role can manage projects.' });
     }
     const projectMember = await prisma.$transaction(async (transaction) => {
       await transaction.project.update({
@@ -442,6 +451,13 @@ router.patch('/projects/:projectId/members/:userId', authenticateToken, authoriz
   try {
     const { project, membership } = await loadProjectAccess(req.params.projectId, req.user.id);
     if (!requireProjectManage(req, res, project, membership)) return;
+    if (role === ProjectRole.PROJECT_MANAGER) {
+      const user = await prisma.user.findUnique({ where: { id: req.params.userId }, select: { role: true } });
+      if (!user) return res.status(404).json({ error: 'Project member not found.' });
+      if (user.role !== Role.PROJECT_MANAGER) {
+        return res.status(400).json({ error: 'Only accounts with the project manager global role can manage projects.' });
+      }
+    }
     const updated = await prisma.projectMember.update({
       where: { projectId_userId: { projectId: project.id, userId: req.params.userId } },
       data: { role },
@@ -512,7 +528,14 @@ router.get('/tasks', authenticateToken, async (req, res) => {
         where,
         include: {
           assignee: { select: userSelect },
-          project: { select: { id: true, name: true, archivedAt: true } },
+          project: {
+            select: {
+              id: true,
+              name: true,
+              archivedAt: true,
+              projectMembers: { where: { userId: req.user.id }, select: { role: true } },
+            },
+          },
         },
         orderBy: { updatedAt: 'desc' },
         skip: pagination.skip,
@@ -530,7 +553,6 @@ router.get('/tasks/:taskId', authenticateToken, async (req, res) => {
   try {
     const task = await loadTaskAccess(req.params.taskId);
     if (!task || !canAccessTask(req.user, task)) return res.status(404).json({ error: 'Task not found or not accessible.' });
-    if (task.project.archivedAt && !isAdmin(req)) return res.status(404).json({ error: 'Task not found or not accessible.' });
     return res.json({ ...task, memberships: undefined });
   } catch (error) {
     return handleDatabaseError(res, error, 'Failed to fetch task.');
@@ -552,9 +574,11 @@ router.post('/projects/:projectId/tasks', authenticateToken, authorizeRoles(Role
     if (assigneeId) {
       const assignee = await prisma.projectMember.findUnique({
         where: { projectId_userId: { projectId: project.id, userId: assigneeId } },
-        include: { user: { select: { isActive: true } } },
+        include: { user: { select: { isActive: true, role: true } } },
       });
-      if (!assignee || !assignee.user.isActive) return res.status(400).json({ error: 'Assignee must be an active member of this project.' });
+      if (!assignee || !assignee.user.isActive || assignee.user.role === Role.VIEWER || assignee.role === ProjectRole.VIEWER) {
+        return res.status(400).json({ error: 'Assignee must be an active, non-viewer member of this project.' });
+      }
     }
     const task = await prisma.task.create({
       data: {
@@ -617,9 +641,11 @@ router.patch('/tasks/:taskId', authenticateToken, async (req, res) => {
     if (taskData.assigneeId) {
       const assignee = await prisma.projectMember.findUnique({
         where: { projectId_userId: { projectId: task.projectId, userId: taskData.assigneeId } },
-        include: { user: { select: { isActive: true } } },
+        include: { user: { select: { isActive: true, role: true } } },
       });
-      if (!assignee || !assignee.user.isActive) return res.status(400).json({ error: 'Assignee must be an active member of the task project.' });
+      if (!assignee || !assignee.user.isActive || assignee.user.role === Role.VIEWER || assignee.role === ProjectRole.VIEWER) {
+        return res.status(400).json({ error: 'Assignee must be an active, non-viewer member of the task project.' });
+      }
     }
     const result = await updateTaskAtVersion(prisma, task.id, version, taskData);
     if (!result.task) return res.status(404).json({ error: 'Task not found.' });
@@ -649,7 +675,6 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req, res) => {
   try {
     const task = await loadTaskAccess(req.params.taskId);
     if (!task || !canAccessTask(req.user, task)) return res.status(404).json({ error: 'Task not found or not accessible.' });
-    if (task.project.archivedAt && !isAdmin(req)) return res.status(404).json({ error: 'Task not found or not accessible.' });
     const [items, total] = await Promise.all([
       prisma.taskComment.findMany({
         where: { taskId: task.id },
@@ -668,12 +693,14 @@ router.get('/tasks/:taskId/comments', authenticateToken, async (req, res) => {
 
 router.post('/tasks/:taskId/comments', authenticateToken, async (req, res) => {
   const { content } = req.body ?? {};
-  if (typeof content !== 'string' || !content.trim()) return res.status(400).json({ error: 'A comment cannot be empty.' });
-  if (![Role.ADMIN, Role.PROJECT_MANAGER, Role.TEAM_MEMBER].includes(req.user.role)) return res.status(403).json({ error: 'Viewers cannot add comments.' });
+  if (typeof content !== 'string' || !content.trim() || content.length > 5000) {
+    return res.status(400).json({ error: 'A comment must contain 1 to 5000 characters.' });
+  }
   try {
     const task = await loadTaskAccess(req.params.taskId);
     if (!task || !canAccessTask(req.user, task)) return res.status(404).json({ error: 'Task not found or not accessible.' });
-    if (task.project.archivedAt && !isAdmin(req)) return res.status(404).json({ error: 'Task not found or not accessible.' });
+    if (task.project.archivedAt && !isAdmin(req)) return res.status(409).json({ error: 'Tasks in archived projects cannot be changed.' });
+    if (!canCommentTask(req.user, task)) return res.status(403).json({ error: 'Your project role does not allow comments.' });
     const comment = await prisma.taskComment.create({
       data: { content: content.trim(), taskId: task.id, authorId: req.user.id },
       include: { author: { select: { id: true, name: true, role: true } } },
@@ -693,8 +720,11 @@ router.delete('/tasks/:taskId/comments/:commentId', authenticateToken, async (re
     if (!comment || comment.taskId !== req.params.taskId) return res.status(404).json({ error: 'Comment not found.' });
     const task = { ...comment.task, memberships: comment.task.project.projectMembers };
     if (!canAccessTask(req.user, task)) return res.status(404).json({ error: 'Comment not found or not accessible.' });
+    if (task.project.archivedAt && !isAdmin(req)) return res.status(409).json({ error: 'Comments in archived projects cannot be changed.' });
     const isAuthor = comment.authorId === req.user.id;
-    if (!isAuthor && !canManageTask(req.user, task)) return res.status(403).json({ error: 'Only the comment author or a project manager can delete this comment.' });
+    if (!(isAuthor && canCommentTask(req.user, task)) && !canManageTask(req.user, task)) {
+      return res.status(403).json({ error: 'Only an authorized comment author or a project manager can delete this comment.' });
+    }
     await prisma.taskComment.delete({ where: { id: comment.id } });
     return res.status(204).end();
   } catch (error) {

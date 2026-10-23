@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiRequest, ApiError, type ApiPage, type Project, type UserRole } from "../lib/api";
+import { apiRequest, type ApiPage, type Project, type UserRole } from "../lib/api";
 import { AppShell, Button, Icon, PageHeading, StatusBadge } from "../components/ui";
 
 type ProjectFilter = "Active" | "Archived";
@@ -26,12 +26,14 @@ export default function ProjectsPage() {
   }, [filter]);
 
   useEffect(() => {
-    setRole(window.sessionStorage.getItem("neostat-role") as UserRole | null);
-    setUserId(window.sessionStorage.getItem("neostat-user-id") ?? "");
+    queueMicrotask(() => {
+      setRole(window.sessionStorage.getItem("neostat-role") as UserRole | null);
+      setUserId(window.sessionStorage.getItem("neostat-user-id") ?? "");
+    });
   }, []);
 
   useEffect(() => {
-    loadProjects().catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load projects."));
+    void Promise.resolve().then(loadProjects).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load projects."));
   }, [loadProjects]);
 
   const visibleProjects = useMemo(() => projects.filter((project) =>

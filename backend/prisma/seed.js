@@ -7,10 +7,11 @@ const prisma = new PrismaClient();
 async function main() {
   const password = await bcrypt.hash('password123', 10);
   const seedUsers = [
-    { name: 'Neostat Admin', email: 'admin@neostats.com', role: Role.ADMIN },
-    { name: 'Project Manager', email: 'pm@neostats.com', role: Role.PROJECT_MANAGER },
-    { name: 'Team Member', email: 'member@neostats.com', role: Role.TEAM_MEMBER },
-    { name: 'Workspace Viewer', email: 'viewer@neostats.com', role: Role.VIEWER },
+    { name: 'Suyash Pandey', email: 'admin@neostats.com', role: Role.ADMIN },
+    { name: 'Rahul Sharma', email: 'pm@neostats.com', role: Role.PROJECT_MANAGER },
+    { name: 'Priya Patel', email: 'member@neostats.com', role: Role.TEAM_MEMBER },
+    { name: 'Arjun Mehta', email: 'arjun@neostats.com', role: Role.TEAM_MEMBER },
+    { name: 'Ananya Iyer', email: 'viewer@neostats.com', role: Role.VIEWER },
   ];
 
   const users = await Promise.all(seedUsers.map(({ name, email, role }) =>
@@ -53,11 +54,12 @@ async function main() {
     });
   }
 
-  const [admin, manager, member] = users;
+  const [admin, manager, member, secondMember] = users;
   const seedTasks = [
     { id: 'seed-task-schema', title: 'Set up database schema', status: TaskStatus.DONE, priority: TaskPriority.HIGH, assigneeId: admin.id },
     { id: 'seed-task-rbac', title: 'Implement role-based access', status: TaskStatus.IN_PROGRESS, priority: TaskPriority.HIGH, assigneeId: manager.id },
     { id: 'seed-task-conflicts', title: 'Build task conflict detection', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, assigneeId: member.id },
+    { id: 'seed-task-testing', title: 'Test project workflows', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, assigneeId: secondMember.id },
   ];
 
   await Promise.all(seedTasks.map((task) =>

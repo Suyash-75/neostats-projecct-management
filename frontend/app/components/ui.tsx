@@ -89,13 +89,22 @@ export function StatusBadge({ status }: { status: string }) {
     "On track": "bg-[#e8f7ef] text-[#23774e]",
     "At risk": "bg-[#fff3dc] text-[#a46a0b]",
     Completed: "bg-[#eeeaff] text-[#6558b9]",
+    Active: "bg-[#e8f7ef] text-[#23774e]",
+    Archived: "bg-[#f0f2f5] text-[#687286]",
     "In progress": "bg-[#eeebff] text-[#5f50c8]",
+    IN_PROGRESS: "bg-[#eeebff] text-[#5f50c8]",
     "To do": "bg-[#f0f2f5] text-[#687286]",
+    TODO: "bg-[#f0f2f5] text-[#687286]",
     "In review": "bg-[#e8f3ff] text-[#3877b5]",
+    IN_REVIEW: "bg-[#e8f3ff] text-[#3877b5]",
     Done: "bg-[#e8f7ef] text-[#23774e]",
+    DONE: "bg-[#e8f7ef] text-[#23774e]",
     High: "bg-[#fff0ee] text-[#bf5147]",
+    HIGH: "bg-[#fff0ee] text-[#bf5147]",
     Medium: "bg-[#fff4de] text-[#a46a0b]",
+    MEDIUM: "bg-[#fff4de] text-[#a46a0b]",
     Low: "bg-[#f0f2f5] text-[#687286]",
+    LOW: "bg-[#f0f2f5] text-[#687286]",
   };
   return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${styles[status] ?? "bg-gray-100 text-gray-600"}`}>{status}</span>;
 }
@@ -104,6 +113,7 @@ const navItems = [
   { href: "/dashboard", label: "Overview", icon: "grid" },
   { href: "/projects", label: "Projects", icon: "folder" },
   { href: "/tasks", label: "Tasks", icon: "check" },
+  { href: "/profile", label: "Account", icon: "users" },
 ];
 
 export function AppShell({
@@ -165,20 +175,7 @@ export function AppShell({
             </Link>
           ))}
         </nav>
-        <div className="mt-7 hidden md:block">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.14em] text-[#9aa1b1]">Your projects</p>
-          <nav className="flex flex-col gap-1">
-            <Link href="/projects/1" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#687286] hover:bg-[#f7f8fa]"><span className="h-2.5 w-2.5 rounded-full bg-[#9b8cf3]" />Website redesign</Link>
-            <Link href="/projects/2" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#687286] hover:bg-[#f7f8fa]"><span className="h-2.5 w-2.5 rounded-full bg-[#6fa8e7]" />Mobile app launch</Link>
-            <Link href="/projects/3" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-[#687286] hover:bg-[#f7f8fa]"><span className="h-2.5 w-2.5 rounded-full bg-[#efb84c]" />Brand identity</Link>
-          </nav>
-        </div>
-        <div className="mt-auto hidden rounded-xl bg-[#f7f6ff] p-4 md:block">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#38315f]"><Icon name="spark" size={16} />Your workspace</div>
-          <p className="mb-3 text-xs leading-5 text-[#77718d]">You’re doing great! Your team has completed 82% of this month’s goals.</p>
-          <Link href="/projects" className="text-xs font-semibold text-[#6558d3] hover:underline">View progress <span aria-hidden>→</span></Link>
-        </div>
-        <div className="mt-4 hidden border-t border-[#eceef2] pt-4 md:block">
+        <div className="mt-4 border-t border-[#eceef2] pt-4 md:mt-auto">
           <Link href="/profile" className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-[#f7f8fa]">
             <Avatar initials={user?.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("") ?? "U"} color="peach" />
             <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-[#30384a]">{user?.name ?? "Loading profile…"}</span><span className="block truncate text-[11px] text-[#8a91a0]">{user?.role.replaceAll("_", " ") ?? "Workspace user"}</span></span>
@@ -194,7 +191,7 @@ export function AppShell({
           <div className="flex items-center gap-4">
             <NotificationButton />
             <div className="h-7 w-px bg-[#e9ebf1]" />
-            <Avatar initials="SP" color="peach" />
+            <Link href="/profile" aria-label="Open your profile"><Avatar initials={user?.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("") ?? "U"} color="peach" /></Link>
           </div>
         </header>
         <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 md:px-8 md:py-8">{children}</main>
