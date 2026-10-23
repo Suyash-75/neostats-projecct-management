@@ -31,7 +31,12 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
       });
-      const result = await response.json();
+      const contentType = response.headers.get("content-type") ?? "";
+      const result = contentType.includes("application/json")
+        ? await response.json()
+        : { error: response.status === 404
+          ? "The backend at port 5000 does not have the login route. Restart it from the backend folder."
+          : `The backend returned an unexpected response (HTTP ${response.status}).` };
 
       if (!response.ok) {
         setLoginError(result.error ?? "Unable to sign in. Please try again.");
