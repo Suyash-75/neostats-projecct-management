@@ -15,11 +15,42 @@ export default function LoginPage() {
   const [role, setRole] = useState("manager");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  function signIn(event: React.FormEvent<HTMLFormElement>) {
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push("/dashboard");
+    setLoginError("");
+    setIsSubmitting(true);
+
+    const selectedRole = {
+      admin: "ADMIN",
+      manager: "PROJECT_MANAGER",
+      member: "TEAM_MEMBER",
+    }[role];
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role: selectedRole }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setLoginError(result.error ?? "Unable to sign in. Please try again.");
+        return;
+      }
+
+      sessionStorage.setItem("neostat-token", result.token);
+      sessionStorage.setItem("neostat-role", result.role);
+      router.push("/dashboard");
+    } catch {
+      setLoginError("Could not connect to the server. Check that the backend is running and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -50,10 +81,11 @@ export default function LoginPage() {
             </div></fieldset>
             <div><label htmlFor="email" className="mb-2 block text-xs font-semibold text-[#50596b]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white px-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div>
             <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-xs font-semibold text-[#50596b]">Password</label><button type="button" className="text-xs font-semibold text-[#6558d3] hover:underline">Forgot password?</button></div><div className="relative"><Icon name="lock" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa1b1]" /><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white pl-10 pr-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div></div>
-            <button type="submit" className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#6558d3] text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3]">Sign in <Icon name="arrow" size={16} /></button>
+            {loginError && <p role="alert" className="rounded-lg bg-[#fff0ee] px-3 py-2.5 text-xs font-medium text-[#a94138]">{loginError}</p>}
+            <button type="submit" disabled={isSubmitting} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#6558d3] text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3] disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Signing in..." : "Sign in"} {!isSubmitting && <Icon name="arrow" size={16} />}</button>
           </form>
           <p className="mt-6 text-center text-xs text-[#868e9e]">New to Neostat? <button type="button" className="font-semibold text-[#6558d3] hover:underline">Create an account</button></p>
-          <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">Demo workspace sign-in · Select any role to continue</p>
+          <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">Demo admin: admin@neostats.com · password123</p>
           <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">By continuing, you agree to our <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Terms of Service</a> and <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Privacy Policy</a>.</p>
         </div>
       </section>
