@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { Icon } from "../components/ui";
 
 const roles = [
-  { value: "manager", label: "Project manager", caption: "Manage projects and teams", icon: "grid" },
-  { value: "member", label: "Team member", caption: "Focus on your tasks", icon: "check" },
-  { value: "admin", label: "Workspace admin", caption: "Manage workspace settings", icon: "users" },
+  { value: "ADMIN", label: "Admin", caption: "Full workspace access", icon: "users" },
+  { value: "PROJECT_MANAGER", label: "Project manager", caption: "Manage projects and tasks", icon: "grid" },
+  { value: "TEAM_MEMBER", label: "Team member", caption: "Update assigned work", icon: "check" },
+  { value: "VIEWER", label: "Viewer", caption: "Read-only project access", icon: "eye" },
 ];
 
 export default function LoginPage() {
-  const [role, setRole] = useState("manager");
+  const [role, setRole] = useState("ADMIN");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -24,17 +25,11 @@ export default function LoginPage() {
     setLoginError("");
     setIsSubmitting(true);
 
-    const selectedRole = {
-      admin: "ADMIN",
-      manager: "PROJECT_MANAGER",
-      member: "TEAM_MEMBER",
-    }[role];
-
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role: selectedRole }),
+        body: JSON.stringify({ email, password, role }),
       });
       const result = await response.json();
 
@@ -76,8 +71,8 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-[440px]">
           <div className="mb-8"><p className="mb-2 text-xs font-semibold uppercase tracking-[.12em] text-[#8b91a0]">Welcome back</p><h2 className="text-[28px] font-semibold tracking-tight text-[#202638]">Sign in to your workspace</h2><p className="mt-2 text-sm text-[#7c8495]">Choose your role and enter your account details.</p></div>
           <form onSubmit={signIn} className="space-y-5">
-            <fieldset><legend className="mb-2.5 text-xs font-semibold text-[#50596b]">I’m signing in as</legend><div className="grid gap-2 sm:grid-cols-3">
-              {roles.map((item) => <button key={item.value} type="button" onClick={() => setRole(item.value)} className={`rounded-xl border p-3 text-left transition ${role === item.value ? "border-[#a69eee] bg-[#f8f7ff] ring-1 ring-[#c9c3f4]" : "border-[#e9ebf1] bg-white hover:border-[#d3d5de]"}`}><span className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg ${role === item.value ? "bg-[#eeebff] text-[#6558d3]" : "bg-[#f5f6f8] text-[#818a9b]"}`}><Icon name={item.icon} size={16} /></span><span className="block text-[11px] font-semibold text-[#41495a]">{item.label}</span><span className="mt-1 hidden text-[10px] leading-4 text-[#8991a0] sm:block">{item.caption}</span></button>)}
+            <fieldset><legend className="mb-2.5 text-xs font-semibold text-[#50596b]">I’m signing in as</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {roles.map((item) => <button key={item.value} type="button" onClick={() => setRole(item.value)} aria-pressed={role === item.value} className={`rounded-xl border p-3 text-left transition ${role === item.value ? "border-[#a69eee] bg-[#f8f7ff] ring-1 ring-[#c9c3f4]" : "border-[#e9ebf1] bg-white hover:border-[#d3d5de]"}`}><span className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg ${role === item.value ? "bg-[#eeebff] text-[#6558d3]" : "bg-[#f5f6f8] text-[#818a9b]"}`}><Icon name={item.icon} size={16} /></span><span className="block text-[11px] font-semibold text-[#41495a]">{item.label}</span><span className="mt-1 hidden text-[10px] leading-4 text-[#8991a0] sm:block">{item.caption}</span></button>)}
             </div></fieldset>
             <div><label htmlFor="email" className="mb-2 block text-xs font-semibold text-[#50596b]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white px-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div>
             <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-xs font-semibold text-[#50596b]">Password</label><button type="button" className="text-xs font-semibold text-[#6558d3] hover:underline">Forgot password?</button></div><div className="relative"><Icon name="lock" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa1b1]" /><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white pl-10 pr-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div></div>
@@ -85,7 +80,7 @@ export default function LoginPage() {
             <button type="submit" disabled={isSubmitting} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#6558d3] text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3] disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Signing in..." : "Sign in"} {!isSubmitting && <Icon name="arrow" size={16} />}</button>
           </form>
           <p className="mt-6 text-center text-xs text-[#868e9e]">New to Neostat? <button type="button" className="font-semibold text-[#6558d3] hover:underline">Create an account</button></p>
-          <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">Demo admin: admin@neostats.com · password123</p>
+          <p className="mt-8 text-center text-[11px] leading-5 text-[#a0a6b2]">Demo accounts use password123: admin@neostats.com · pm@neostats.com · member@neostats.com · viewer@neostats.com</p>
           <p className="mt-8 text-center text-[11px] text-[#a0a6b2]">By continuing, you agree to our <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Terms of Service</a> and <a href="#" className="underline decoration-[#c5c9d1] underline-offset-2">Privacy Policy</a>.</p>
         </div>
       </section>

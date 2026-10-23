@@ -12,7 +12,12 @@ app.use(express.json());
 app.use('/api', apiRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running successfully!' });
+  prisma.$queryRaw`SELECT 1`
+    .then(() => res.json({ status: 'ok', database: 'connected' }))
+    .catch((error) => {
+      console.error('Database health check failed:', error);
+      res.status(503).json({ status: 'error', database: 'disconnected' });
+    });
 });
 
 async function start() {
