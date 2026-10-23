@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const bcrypt = require('bcrypt');
-const { PrismaClient, Role, ProjectRole, TaskStatus, TaskPriority } = require('@prisma/client');
+const { PrismaClient, Role, ProjectRole, TaskStatus, TaskPriority } = require('../generated/prisma');
 const prisma = new PrismaClient();
 
 async function main() {

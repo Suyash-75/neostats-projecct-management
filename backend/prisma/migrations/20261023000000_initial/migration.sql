@@ -48,9 +48,6 @@ CREATE TABLE "_ProjectToUser" (
 
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "Project_name_key" ON "Project"("name");
-CREATE INDEX "Task_projectId_idx" ON "Task"("projectId");
-CREATE INDEX "Task_assigneeId_idx" ON "Task"("assigneeId");
-CREATE INDEX "TaskComment_taskId_createdAt_idx" ON "TaskComment"("taskId", "createdAt");
 CREATE UNIQUE INDEX "_ProjectToUser_AB_unique" ON "_ProjectToUser"("A", "B");
 CREATE INDEX "_ProjectToUser_B_index" ON "_ProjectToUser"("B");
 

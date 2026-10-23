@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -34,32 +35,32 @@ enum TaskPriority {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String
-  email         String        @unique
+  email         String          @unique
   password      String
-  role          Role          @default(TEAM_MEMBER)
-  isActive      Boolean       @default(true)
-  projects      Project[]      @relation("ProjectUsers")
+  role          Role            @default(TEAM_MEMBER)
+  isActive      Boolean         @default(true)
+  projects      Project[]
   memberships   ProjectMember[]
-  assignedTasks Task[]        @relation("TaskAssignee")
+  assignedTasks Task[]          @relation("TaskAssignee")
   comments      TaskComment[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([role, isActive])
 }
 
 model Project {
-  id          String          @id @default(cuid())
-  name        String          @unique
-  description String?
-  archivedAt  DateTime?
-  members     User[]           @relation("ProjectUsers")
+  id             String          @id @default(cuid())
+  name           String          @unique
+  description    String?
+  archivedAt     DateTime?
+  members        User[]
   projectMembers ProjectMember[]
-  tasks       Task[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  tasks          Task[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([archivedAt])
 }

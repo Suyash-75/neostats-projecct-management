@@ -1,4 +1,4 @@
-const { Role, ProjectRole } = require('@prisma/client');
+const { Role, ProjectRole } = require('./generated/prisma');
 
 function canReadProject(user, membership) {
   return user.role === Role.ADMIN || Boolean(membership);

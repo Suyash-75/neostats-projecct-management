@@ -30,6 +30,7 @@ JOIN "User" AS member ON member."id" = relation."B";
 CREATE INDEX "ProjectMember_userId_idx" ON "ProjectMember"("userId");
 CREATE INDEX "Project_archivedAt_idx" ON "Project"("archivedAt");
 CREATE INDEX "Task_projectId_status_idx" ON "Task"("projectId", "status");
+CREATE INDEX "TaskComment_taskId_createdAt_idx" ON "TaskComment"("taskId", "createdAt");
 CREATE INDEX "User_role_isActive_idx" ON "User"("role", "isActive");
 
 ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_projectId_fkey"

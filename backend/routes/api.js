@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { Role, ProjectRole, TaskStatus, TaskPriority, Prisma } = require('@prisma/client');
+const { Role, ProjectRole, TaskStatus, TaskPriority, Prisma } = require('../generated/prisma');
 const prisma = require('../prisma/client');
 const { authenticateToken, authorizeRoles } = require('../auth');
 const {
@@ -386,6 +386,24 @@ router.get('/projects/:projectId/members', authenticateToken, async (req, res) =
   }
 });
 
+router.get('/projects/:projectId/available-members', authenticateToken, authorizeRoles(Role.ADMIN, Role.PROJECT_MANAGER), async (req, res) => {
+  try {
+    const { project, membership } = await loadProjectAccess(req.params.projectId, req.user.id);
+    if (!requireProjectManage(req, res, project, membership)) return;
+    const users = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        projects: { none: { id: project.id } },
+      },
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: { name: 'asc' },
+    });
+    return res.json(users);
+  } catch (error) {
+    return handleDatabaseError(res, error, 'Failed to fetch available members.');
+  }
+});
+
 router.post('/projects/:projectId/members', authenticateToken, authorizeRoles(Role.ADMIN, Role.PROJECT_MANAGER), async (req, res) => {
   const { userId, role } = req.body ?? {};
   if (typeof userId !== 'string' || (role !== undefined && !projectRoleValues.includes(role))) return res.status(400).json({ error: 'Provide a valid userId and optional project role.' });
@@ -470,6 +488,41 @@ router.get('/projects/:projectId/tasks', authenticateToken, async (req, res) => 
     return res.json({ items, page: pagination.page, limit: pagination.limit, total });
   } catch (error) {
     return handleDatabaseError(res, error, 'Failed to fetch project tasks.');
+  }
+});
+
+router.get('/tasks', authenticateToken, async (req, res) => {
+  const pagination = parsePagination(req.query);
+  if (!pagination) return res.status(400).json({ error: 'Pagination must use page >= 1 and limit between 1 and 100.' });
+  if (req.query.status && !taskStatuses.includes(req.query.status)) return res.status(400).json({ error: 'Invalid task status filter.' });
+  const where = {
+    ...(req.query.status ? { status: req.query.status } : {}),
+    ...(req.query.assigneeId ? { assigneeId: String(req.query.assigneeId) } : {}),
+  };
+  if (!isAdmin(req)) {
+    where.project = { archivedAt: null };
+    where.OR = [
+      { project: { projectMembers: { some: { userId: req.user.id } } } },
+      { assigneeId: req.user.id },
+    ];
+  }
+  try {
+    const [items, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        include: {
+          assignee: { select: userSelect },
+          project: { select: { id: true, name: true, archivedAt: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+        skip: pagination.skip,
+        take: pagination.limit,
+      }),
+      prisma.task.count({ where }),
+    ]);
+    return res.json({ items, page: pagination.page, limit: pagination.limit, total });
+  } catch (error) {
+    return handleDatabaseError(res, error, 'Failed to fetch tasks.');
   }
 });
 
