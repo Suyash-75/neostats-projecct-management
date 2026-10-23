@@ -113,7 +113,7 @@ export function AppShell({
       <aside className="flex w-full flex-col border-b border-[#e9ebf1] bg-white px-4 py-4 md:fixed md:inset-y-0 md:w-[248px] md:border-r md:border-b-0 md:px-5 md:py-7">
         <Link href="/dashboard" className="mb-5 flex items-center gap-2.5 px-1 md:mb-10">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6558d3] text-white shadow-sm"><Icon name="spark" size={20} /></span>
-          <span className="text-[19px] font-bold tracking-tight text-[#202638]">neostat</span>
+          <span className="text-[19px] font-bold tracking-tight text-[#202638]">Project<span className="text-[#6558d3]">Pulse</span></span>
           <span className="ml-auto rounded-md bg-[#f5f4fb] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#77718d] md:hidden">Workspace</span>
         </Link>
         <p className="mb-2 hidden px-3 text-[10px] font-bold uppercase tracking-[.14em] text-[#9aa1b1] md:block">Workspace</p>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Neostat — Project workspace",
-  description: "Plan projects, coordinate teams, and keep work moving.",
+  title: "ProjectPulse — Project workspace",
+  description: "Bring people, projects, and progress together with ProjectPulse.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

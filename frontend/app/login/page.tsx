@@ -26,7 +26,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"}/api/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:5000"}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
@@ -46,8 +46,9 @@ export default function LoginPage() {
       sessionStorage.setItem("neostat-token", result.token);
       sessionStorage.setItem("neostat-role", result.role);
       router.push("/dashboard");
-    } catch {
-      setLoginError("Could not connect to the server. Check that the backend is running and try again.");
+    } catch (error) {
+      console.error("Login request failed:", error);
+      setLoginError("Could not connect to the API at 127.0.0.1:5000. Start the backend with `npm start` from the backend folder.");
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +60,7 @@ export default function LoginPage() {
         <div className="absolute -right-32 -top-28 h-[440px] w-[440px] rounded-full border border-white/[.08]" />
         <div className="absolute -right-12 -top-8 h-[280px] w-[280px] rounded-full border border-white/[.08]" />
         <div className="absolute -bottom-48 -left-20 h-[460px] w-[460px] rounded-full border border-white/[.08]" />
-        <Link href="/dashboard" className="relative z-10 flex items-center gap-2.5"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7669df]"><Icon name="spark" size={21} /></span><span className="text-xl font-bold tracking-tight">neostat</span></Link>
+        <Link href="/" className="relative z-10 flex items-center gap-2.5"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7669df]"><Icon name="spark" size={21} /></span><span className="text-xl font-bold tracking-tight">Project<span className="text-[#a99fff]">Pulse</span></span></Link>
         <div className="relative z-10 max-w-[540px] pb-8">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.06] px-3 py-1.5 text-[11px] font-medium text-[#d3cef9]"><span className="h-1.5 w-1.5 rounded-full bg-[#9d91ff]" /> A calmer way to get work done</div>
           <h1 className="text-4xl font-semibold leading-[1.15] tracking-tight xl:text-[48px]">Great work happens when teams move <span className="text-[#a99fff]">together.</span></h1>
@@ -72,14 +73,14 @@ export default function LoginPage() {
         <p className="relative z-10 text-[11px] text-[#89859d]">© 2025 Neostat, Inc. All rights reserved.</p>
       </section>
       <section className="flex min-h-screen flex-col px-5 py-7 sm:px-10 lg:justify-center lg:px-12 xl:px-20">
-        <Link href="/dashboard" className="mb-10 flex items-center gap-2.5 lg:hidden"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6558d3] text-white"><Icon name="spark" size={19} /></span><span className="text-lg font-bold tracking-tight text-[#202638]">neostat</span></Link>
+        <Link href="/" className="mb-10 flex items-center gap-2.5 lg:hidden"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6558d3] text-white"><Icon name="spark" size={19} /></span><span className="text-lg font-bold tracking-tight text-[#202638]">Project<span className="text-[#6558d3]">Pulse</span></span></Link>
         <div className="mx-auto w-full max-w-[440px]">
           <div className="mb-8"><p className="mb-2 text-xs font-semibold uppercase tracking-[.12em] text-[#8b91a0]">Welcome back</p><h2 className="text-[28px] font-semibold tracking-tight text-[#202638]">Sign in to your workspace</h2><p className="mt-2 text-sm text-[#7c8495]">Choose your role and enter your account details.</p></div>
           <form onSubmit={signIn} className="space-y-5">
             <fieldset><legend className="mb-2.5 text-xs font-semibold text-[#50596b]">I’m signing in as</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {roles.map((item) => <button key={item.value} type="button" onClick={() => setRole(item.value)} aria-pressed={role === item.value} className={`rounded-xl border p-3 text-left transition ${role === item.value ? "border-[#a69eee] bg-[#f8f7ff] ring-1 ring-[#c9c3f4]" : "border-[#e9ebf1] bg-white hover:border-[#d3d5de]"}`}><span className={`mb-2 flex h-8 w-8 items-center justify-center rounded-lg ${role === item.value ? "bg-[#eeebff] text-[#6558d3]" : "bg-[#f5f6f8] text-[#818a9b]"}`}><Icon name={item.icon} size={16} /></span><span className="block text-[11px] font-semibold text-[#41495a]">{item.label}</span><span className="mt-1 hidden text-[10px] leading-4 text-[#8991a0] sm:block">{item.caption}</span></button>)}
             </div></fieldset>
-            <div><label htmlFor="email" className="mb-2 block text-xs font-semibold text-[#50596b]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white px-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div>
+            <div><label htmlFor="email" className="mb-2 block text-xs font-semibold text-[#50596b]">Email address</label><input id="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white px-3.5 text-sm text-[#202638] outline-none placeholder:text-[#697386] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div>
             <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-xs font-semibold text-[#50596b]">Password</label><button type="button" className="text-xs font-semibold text-[#6558d3] hover:underline">Forgot password?</button></div><div className="relative"><Icon name="lock" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9aa1b1]" /><input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" className="h-11 w-full rounded-lg border border-[#e4e6ec] bg-white pl-10 pr-3.5 text-sm outline-none placeholder:text-[#a1a7b3] focus:border-[#a39aeb] focus:ring-2 focus:ring-[#eeeaff]" /></div></div>
             {loginError && <p role="alert" className="rounded-lg bg-[#fff0ee] px-3 py-2.5 text-xs font-medium text-[#a94138]">{loginError}</p>}
             <button type="submit" disabled={isSubmitting} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#6558d3] text-sm font-semibold text-white shadow-sm transition hover:bg-[#5749c3] disabled:cursor-wait disabled:opacity-70">{isSubmitting ? "Signing in..." : "Sign in"} {!isSubmitting && <Icon name="arrow" size={16} />}</button>
