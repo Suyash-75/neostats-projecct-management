@@ -6,7 +6,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "concurrently \"cd backend && node server.js\"
     "dev": "node --watch server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -24,8 +23,5 @@
   },
   "devDependencies": {
     "prisma": "6.19.1"
-  }
-  "scripts": {
-   \"cd frontend && npm run dev\""
   }
 }
