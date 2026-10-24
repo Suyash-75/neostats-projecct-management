@@ -107,10 +107,21 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   if (response.status === 204) return undefined as T;
 
   const payload = await response.json().catch(() => null) as { error?: string } | null;
-  if (!response.ok) {
-    throw new ApiError(payload?.error ?? `Request failed with HTTP ${response.status}.`, response.status, payload);
-  }
-  return payload as T;
+
+if (!response.ok) {
+  // Explicitly mapping properties fixes the TS compilation complaints
+  console.error('API Error Details:', { 
+    status: response.status, 
+    payload: payload 
+  });
+  
+  throw new ApiError(
+    payload?.error ?? `Request failed with HTTP ${response.status}.`, 
+    response.status, 
+    payload
+  );
+}
+return payload as T;
 }
 
 export function formatLocalDate(value: string | null) {
